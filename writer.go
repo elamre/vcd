@@ -31,6 +31,9 @@ type VcdWriter struct {
 	previousTime        uint64
 }
 
+// Creates a new VCDWriter object
+// The date is set to the current date
+// Timescale can be one of the following: 1-10-100 combined with unit: s-ms-us-ns-ps-fs
 func New(filename string, timeScale string) (VcdWriter, error) {
 	if !strings.HasSuffix(filename, ".vcd") {
 		filename = filename + ".vcd"
@@ -61,6 +64,8 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
+// Sets the correct marshaller for the type. Different types require different formatting
+// Returns an error if a not-implemented datatype is used
 func initVariable(variable *VcdDataType, identifier string) error {
 	if !stringInSlice(variable.VariableType, supportedTypes) {
 		return fmt.Errorf("unsupported data type: \"%s\" supported types: %v", variable.VariableType, supportedTypes)
@@ -88,11 +93,15 @@ func check(e error) {
 }
 
 func check2(nums int, e error) {
+	_ = nums
 	if e != nil {
 		panic(e)
 	}
 }
 
+// Register variables
+// Variables is an array of VcdDatatTypes
+// See writer.go -> NewVariable
 func (vcd *VcdWriter) RegisterVariables(module string, variables ...VcdDataType) (map[string]VcdDataType, error) {
 	check2(vcd.buffered.WriteString("$scope module " + module + " $end\n"))
 	for _, variable := range variables {
@@ -108,6 +117,9 @@ func (vcd *VcdWriter) RegisterVariables(module string, variables ...VcdDataType)
 	return vcd.stringIdentifierMap, nil
 }
 
+// Sets a valie for a specific variable
+// Time in timeunits, always has to be the same, or larger as the previous time
+// Panics when value can not be marshaled, or when there are problems with the time
 func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) error {
 	if time < vcd.previousTime {
 		return fmt.Errorf("changing value from an earlier time: %d < %d", time, vcd.previousTime)
@@ -124,16 +136,25 @@ func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) e
 	return e
 }
 
+// Sets the comment in the vcd. Can be used together with the SetVersion
+// Can only be used before registering the variables
 func (vcd *VcdWriter) SetComment(comment string) *VcdWriter {
 	check2(vcd.buffered.WriteString("$comment\n\t" + comment + "\n$end\n"))
 	return vcd
 }
 
+// Sets the version in the vcd. Can be used together with the SetComment
+// Can only be used before registering the variables
 func (vcd *VcdWriter) SetVersion(version string) *VcdWriter {
 	check2(vcd.buffered.WriteString("$version\n\t" + version + "\n$end\n"))
 	return vcd
 }
 
+func (vcd *VcdWriter) SetTimestamp(time uint64) {
+	_, _ = vcd.buffered.WriteString("#" + strconv.FormatUint(time, 10) + "\n")
+}
+
+// Closes and flushes the files
 func (vcd VcdWriter) Close() {
 	check(vcd.buffered.Flush())
 	check(vcd.loadedFile.Close())

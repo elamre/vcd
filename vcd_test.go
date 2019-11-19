@@ -9,7 +9,7 @@ import (
 var testDirectory = "vcd_test/"
 var testFile = "test"
 
-func checkFormat(formatFunc VcdMarshall, value string, expectedResponse string) error {
+func checkFormat(formatFunc vcdMarshall, value string, expectedResponse string) error {
 	resp, e := formatFunc.format(value)
 	if e != nil {
 		panic(e)
