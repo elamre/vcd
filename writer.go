@@ -112,7 +112,7 @@ func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) e
 		_, _ = vcd.buffered.WriteString("#" + strconv.FormatUint(time, 10) + "\n")
 		vcd.previousTime = time
 	}
-	format, e := vcd.stringIdentifierMap[variableName].marshal.format(value)
+	format, e := format(value)
 	if e != nil {
 		panic(e)
 	}
