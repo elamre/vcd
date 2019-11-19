@@ -8,6 +8,12 @@ import (
 
 var supportedTypes = []string{"vector", "wire", "real", "string"}
 
+var stringToType = map[string] VcdMarshall {
+	"string": VcdStringType{},
+	"real" : VcdRealType{},
+	"vector" : VcdVectorType{bitDepth:8, maxVal:255},
+}
+
 type VcdDataType struct {
 	VariableName string
 	VariableType string

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -31,6 +32,9 @@ type VcdWriter struct {
 }
 
 func New(filename string, timeScale string) (VcdWriter, error) {
+	if !strings.HasSuffix(filename, ".vcd") {
+		filename = filename + ".vcd"
+	}
 	f, err := os.Create(filename)
 	writer := VcdWriter{
 		loadedFile:          f,
@@ -112,7 +116,7 @@ func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) e
 		_, _ = vcd.buffered.WriteString("#" + strconv.FormatUint(time, 10) + "\n")
 		vcd.previousTime = time
 	}
-	format, e := format(value)
+	format, e := vcd.stringIdentifierMap[variableName].marshal.format(value)
 	if e != nil {
 		panic(e)
 	}
@@ -120,12 +124,12 @@ func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) e
 	return e
 }
 
-func (vcd VcdWriter) SetComment(comment string) VcdWriter {
+func (vcd *VcdWriter) SetComment(comment string) *VcdWriter {
 	check2(vcd.buffered.WriteString("$comment\n\t" + comment + "\n$end\n"))
 	return vcd
 }
 
-func (vcd VcdWriter) SetVersion(version string) VcdWriter {
+func (vcd *VcdWriter) SetVersion(version string) *VcdWriter {
 	check2(vcd.buffered.WriteString("$version\n\t" + version + "\n$end\n"))
 	return vcd
 }
