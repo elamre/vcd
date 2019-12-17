@@ -75,11 +75,12 @@ func initVariable(variable *VcdDataType, identifier string) error {
 	case "real":
 		variable.marshal = VcdRealType{}
 	case "wire":
-		variable.marshal = VcdVectorType{bitDepth: variable.BitDepth, maxVal: 2 << (variable.BitDepth - 1)}
+		maxVal := uint64(2 << (variable.BitDepth - 1))
+		variable.marshal = VcdVectorType{bitDepth: variable.BitDepth, maxVal: maxVal}
 	case "vector":
 		variable.marshal = VcdVectorType{bitDepth: variable.BitDepth, maxVal: 2 << (variable.BitDepth - 1)}
 	case "string":
-		variable.marshal = VcdStringType{}
+		variable.marshal = &VcdStringType{}
 	default:
 		return fmt.Errorf("not implemented datatype: \"%s\"", variable.VariableType)
 	}
@@ -117,6 +118,18 @@ func (vcd *VcdWriter) RegisterVariables(module string, variables ...VcdDataType)
 	return vcd.stringIdentifierMap, nil
 }
 
+func (vcd *VcdWriter) DumpValues(identifierToValue map[string]string) {
+	_, e := vcd.buffered.WriteString("$dumpvars\n")
+	check(e)
+	for i, _ := range identifierToValue {
+		val, e := vcd.stringIdentifierMap[i].marshal.format(identifierToValue[i])
+		check(e)
+		check2(vcd.buffered.WriteString(val + " " + vcd.stringIdentifierMap[i].identifier + "\n"))
+	}
+	_, e = vcd.buffered.WriteString("$end\n")
+	check(e)
+}
+
 // Sets a valie for a specific variable
 // Time in timeunits, always has to be the same, or larger as the previous time
 // Panics when value can not be marshaled, or when there are problems with the time
@@ -130,7 +143,11 @@ func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) e
 	}
 	format, e := vcd.stringIdentifierMap[variableName].marshal.format(value)
 	if e != nil {
-		panic(e)
+		if e == duplicateErr{
+			return nil
+		}else{
+			panic(e)
+		}
 	}
 	check2(vcd.buffered.WriteString(format + " " + vcd.stringIdentifierMap[variableName].identifier + "\n"))
 	return e

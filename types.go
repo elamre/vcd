@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,8 +11,12 @@ import (
 // TODO implement missing types
 var supportedTypes = []string{"vector", "wire", "real", "string"}
 
+// Not really an error, but prevents writing of empty strings when there was no change. This causes glitches
+// TODO maybe eventually add a boolean return for every marshal instead of throwing and comparing errors
+var duplicateErr = errors.New("duplicate")
+
 var stringToType = map[string]vcdMarshall{
-	"string": VcdStringType{},
+	"string": &VcdStringType{},
 	"real":   VcdRealType{},
 	"vector": VcdVectorType{bitDepth: 8, maxVal: 255},
 }
@@ -51,14 +56,14 @@ func (t VcdRealType) format(value string) (string, error) {
 // Defines vector types such as 01010101
 type VcdVectorType struct {
 	bitDepth int
-	maxVal   int
+	maxVal   uint64
 }
 
 func (t VcdVectorType) format(value string) (string, error) {
 	if value == "x" || value == "z" {
 		return "b" + value, nil
-	} else if num, err := strconv.Atoi(value); err == nil {
-		if num > t.maxVal || num < -t.maxVal {
+	} else if num, err := strconv.ParseInt(value, 10, 64); err == nil {
+		if uint64(num) > t.maxVal {
 			return "bz", fmt.Errorf("vector is larger %d than bitdepth allows 2^%d=%d", num, t.bitDepth, t.maxVal)
 		} else {
 			return fmt.Sprintf("b%b", num), nil
@@ -69,8 +74,17 @@ func (t VcdVectorType) format(value string) (string, error) {
 }
 
 // Defines string types
-type VcdStringType struct{}
+type VcdStringType struct {
+	empty bool
+}
 
-func (t VcdStringType) format(value string) (string, error) {
+func (t * VcdStringType) format(value string) (string, error) {
+	if value == "" && t.empty{
+		return "", duplicateErr
+	}else if value == "" {
+		t.empty = true
+	}else{
+		t.empty = false
+	}
 	return fmt.Sprintf("s%s", strings.Replace(value, " ", "\\040", -1)), nil
 }
