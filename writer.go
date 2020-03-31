@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
+	//"strings"
 	"time"
 )
 
@@ -35,9 +35,9 @@ type VcdWriter struct {
 // The date is set to the current date
 // Timescale can be one of the following: 1-10-100 combined with unit: s-ms-us-ns-ps-fs
 func New(filename string, timeScale string) (VcdWriter, error) {
-	if !strings.HasSuffix(filename, ".vcd") {
-		filename = filename + ".vcd"
-	}
+	//if !strings.HasSuffix(filename, ".vcd") {
+//		filename = filename + ".vcd"
+	//}
 	f, err := os.Create(filename)
 	writer := VcdWriter{
 		loadedFile:          f,
@@ -98,6 +98,24 @@ func check2(nums int, e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+// Register variables
+// Variables is an array of VcdDatatTypes
+// See writer.go -> NewVariable
+func (vcd *VcdWriter) RegisterVariableList(module string, variables []VcdDataType) (map[string]VcdDataType, error) {
+	check2(vcd.buffered.WriteString("$scope module " + module + " $end\n"))
+	for _, variable := range variables {
+		check(initVariable(&variable, string(vcd.variableDefiner)))
+
+		vcd.variableDefiner = vcd.variableDefiner + 1
+		response := fmt.Sprintf("%s %d %s %s", variable.VariableType, variable.BitDepth, variable.identifier, variable.VariableName)
+		vcd.stringIdentifierMap[variable.VariableName] = variable
+		check2(vcd.buffered.WriteString("$var " + response + " $end\n"))
+	}
+	check2(vcd.buffered.WriteString("$upscope $end\n"))
+	check2(vcd.buffered.WriteString("$enddefinitions $end\n"))
+	return vcd.stringIdentifierMap, nil
 }
 
 // Register variables
