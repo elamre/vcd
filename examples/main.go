@@ -51,7 +51,7 @@ func main() {
 	_ = writer.SetValue(500, "", "command")
 	_ = writer.SetValue(500, "0", "analogue")
 	writer.SetTimestamp(600)
-	gtkw := vcd.Gtkw("example")
+	gtkw := vcd.NewGtkw("example")
 	defer gtkw.Close()
 	gtkw.Group("SPI", true,
 		vcd.Trace("example.logic.mosi[7:0]", "mosi", "rjustify", "hex"),
