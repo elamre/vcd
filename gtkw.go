@@ -48,17 +48,17 @@ func init() {
 	}
 }
 
-type gtkw struct {
+type Gtkw struct {
 	file *os.File
 }
 
-type gtkMarshal interface {
+type GtkMarshal interface {
 	toString() string
 	getFlags() string
 }
 
-type gtkwTrace struct {
-	gtkMarshal
+type GtkwTrace struct {
+	GtkMarshal
 	name  string
 	alias string
 	flags [] string
@@ -72,36 +72,36 @@ func getEncodedFlags(flags [] string) string {
 	return fmt.Sprintf("%x", tempFlag)
 }
 
-func (trace gtkwTrace) getFlags() string {
+func (trace GtkwTrace) getFlags() string {
 	return fmt.Sprintf("@%s\n", getEncodedFlags(trace.flags))
 }
 
-func (trace gtkwTrace) toString() string {
+func (trace GtkwTrace) toString() string {
 	return fmt.Sprintf("+{%s} %s\n", trace.alias, trace.name)
 }
 
-func Trace(name string, alias string, flags ...string) gtkwTrace {
-	return gtkwTrace{
+func Trace(name string, alias string, flags ...string) GtkwTrace {
+	return GtkwTrace{
 		name:  name,
 		alias: alias,
 		flags: flags,
 	}
 }
 
-func Gtkw(filename string) gtkw {
+func NewGtkw(filename string) Gtkw {
 	if !strings.HasSuffix(filename, ".gtkw") {
 		filename = filename + ".gtkw"
 	}
 	f, err := os.Create(filename)
 	check(err)
-	return gtkw{file: f}
+	return Gtkw{file: f}
 }
 
-func (gtkw *gtkw) SetDumpfile(dumpfile string) {
+func (gtkw *Gtkw) SetDumpfile(dumpfile string) {
 	_, _ = gtkw.file.WriteString(fmt.Sprintf("[dumpfile] \"%s\"\n", dumpfile))
 }
 
-func (gtkw *gtkw) writeFlags(flags ...string) {
+func (gtkw *Gtkw) writeFlags(flags ...string) {
 	tempFlag := uint32(0)
 	for _, flag := range flags {
 		tempFlag |= flagDecoder[flag]
@@ -109,7 +109,7 @@ func (gtkw *gtkw) writeFlags(flags ...string) {
 	_, _ = gtkw.file.WriteString(fmt.Sprintf("@%x\n", tempFlag))
 }
 
-func (gtkw *gtkw) Group(groupName string, closed bool, traces ...gtkMarshal) {
+func (gtkw *Gtkw) Group(groupName string, closed bool, traces ...GtkMarshal) {
 	// Start the group
 	if closed {
 		gtkw.writeFlags("grp_begin", "closed", "blank")
@@ -135,7 +135,7 @@ func (gtkw *gtkw) Group(groupName string, closed bool, traces ...gtkMarshal) {
 	_, _ = gtkw.file.WriteString(fmt.Sprintf("-%s\n", groupName))
 }
 
-func (gtkw *gtkw) Trace(traces ...gtkMarshal) {
+func (gtkw *Gtkw) Trace(traces ...GtkMarshal) {
 	prevFlag := ""
 	for _, trace := range traces {
 		flag := trace.getFlags()
@@ -147,6 +147,6 @@ func (gtkw *gtkw) Trace(traces ...gtkMarshal) {
 	}
 }
 
-func (gtkw *gtkw) Close() {
+func (gtkw *Gtkw) Close() {
 	_ = gtkw.file.Close()
 }
