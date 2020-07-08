@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -98,7 +99,7 @@ func NewGtkw(filename string) Gtkw {
 }
 
 func (gtkw *Gtkw) SetDumpfile(dumpfile string) {
-	_, _ = gtkw.file.WriteString(fmt.Sprintf("[dumpfile] \"%s\"\n", dumpfile))
+	_, _ = gtkw.file.WriteString(fmt.Sprintf("[dumpfile] \"%s\"\n", filepath.Base(dumpfile)))
 }
 
 func (gtkw *Gtkw) writeFlags(flags ...string) {
