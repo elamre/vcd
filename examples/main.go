@@ -1,9 +1,12 @@
 package main
 
-import "github.com/elamre/vcd"
+import (
+	"github.com/elamre/vcd"
+	"log"
+)
 
-func main() {
-	writer, e := vcd.New("example", "10ps")
+func WriteExampleVcd(filename string) {
+	writer, e := vcd.New(filename, "10ps")
 	if e != nil {
 		panic(e)
 	}
@@ -51,6 +54,9 @@ func main() {
 	_ = writer.SetValue(500, "", "command")
 	_ = writer.SetValue(500, "0", "analogue")
 	writer.SetTimestamp(600)
+}
+
+func CreatGtkw(vcdFilename string) {
 	gtkw := vcd.NewGtkw("example")
 	defer gtkw.Close()
 	gtkw.Group("SPI", true,
@@ -62,5 +68,24 @@ func main() {
 		vcd.Trace("example.real.analogue", "analogue", "analog_interpolated", "analog_fullscale"),
 	)
 	gtkw.Trace(vcd.Trace("example.command", "command"))
-	gtkw.SetDumpfile("example.vcd")
+	gtkw.SetDumpfile(vcdFilename)
+}
+
+func ReadVcd(filename string) {
+	read, err := vcd.NewReader(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer read.Close()
+	contents := read.ReadAll()
+	log.Printf("Date: %s, Version: %s, Comments: %s, Timescale: %s", read.Date, read.Version, read.Comment, read.Timescale)
+	log.Printf("Contents: %+v", contents["example.logic.mosi"])
+}
+
+func main() {
+	filename := "example.vcd"
+	WriteExampleVcd(filename)
+	CreatGtkw(filename)
+	ReadVcd(filename)
+
 }
