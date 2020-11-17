@@ -93,11 +93,11 @@ func check(e error) {
 	}
 }
 
-func check2(nums int, e error) {
-	_ = nums
+func check2(data interface{}, e error) interface{} {
 	if e != nil {
 		panic(e)
 	}
+	return data
 }
 
 // Register variables
