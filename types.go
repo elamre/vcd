@@ -44,6 +44,7 @@ func NewVariable(name string, variableType string, depth int) VcdDataType {
 // Marshaller that should be implemented by every type
 type vcdMarshall interface {
 	format(value string) (string, error)
+	parse(value string) (interface{}, error)
 }
 
 // Defines real types such as 1.4 -3.4
@@ -51,6 +52,12 @@ type VcdRealType struct{}
 
 func (t VcdRealType) format(value string) (string, error) {
 	return fmt.Sprintf("r%s", value), nil
+}
+
+func (t VcdRealType) parse(value string) (interface{}, error) {
+	value = value[1:]
+	f, err := strconv.ParseFloat(value, 32)
+	return f, err
 }
 
 // Defines vector types such as 01010101
@@ -73,18 +80,28 @@ func (t VcdVectorType) format(value string) (string, error) {
 	}
 }
 
+func (t VcdVectorType) parse(value string) (interface{}, error) {
+	return value[1:], nil
+}
+
 // Defines string types
 type VcdStringType struct {
 	empty bool
 }
 
-func (t * VcdStringType) format(value string) (string, error) {
-	if value == "" && t.empty{
+func (t *VcdStringType) format(value string) (string, error) {
+	if value == "" && t.empty {
 		return "", duplicateErr
-	}else if value == "" {
+	} else if value == "" {
 		t.empty = true
-	}else{
+	} else {
 		t.empty = false
 	}
 	return fmt.Sprintf("s%s", strings.Replace(value, " ", "\\040", -1)), nil
+}
+
+func (t VcdStringType) parse(value string) (interface{}, error) {
+	value = strings.ReplaceAll(value, "\\040", " ")
+	value = value[1:]
+	return value, nil
 }
