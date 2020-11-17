@@ -18,10 +18,10 @@ type VcdReader struct {
 	buffered   *bufio.Reader
 	time       int64
 
-	date              string
-	timescale         string
-	version           string
-	comment           string
+	Date              string
+	Timescale         string
+	Version           string
+	Comment           string
 	identifierNameMap map[string]VcdDataType
 }
 
@@ -32,6 +32,10 @@ func NewReader(filename string) (VcdReader, error) {
 	reader.buffered = bufio.NewReader(reader.loadedFile)
 	reader.identifierNameMap = nil
 	return reader, err
+}
+
+func (reader VcdReader) Close() {
+	_ = reader.loadedFile.Close()
 }
 
 func (reader VcdReader) GetIdentifiers() map[string]VcdDataType {
@@ -71,7 +75,7 @@ func (reader *VcdReader) ParseHeader() {
 			}
 		case "$comment":
 			for _, ss := range delim[1 : l-2] {
-				reader.comment += ss + " "
+				reader.Comment += ss + " "
 			}
 		case "$var":
 			var datType VcdDataType
@@ -91,13 +95,13 @@ func (reader *VcdReader) ParseHeader() {
 			}
 			reader.identifierNameMap[datType.identifier] = datType
 		case "$date":
-			reader.date = delim[1] + " " + delim[2]
+			reader.Date = delim[1] + " " + delim[2]
 		case "$version":
 			for _, ss := range delim[1 : l-2] {
-				reader.version += ss
+				reader.Version += ss
 			}
 		case "$timescale":
-			reader.timescale = delim[1]
+			reader.Timescale = delim[1]
 		case "$enddefinitions":
 			break
 		default:

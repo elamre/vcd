@@ -17,10 +17,10 @@ func (error *VcdError) Error() string {
 	return error.msg
 }
 
-// Valid timescale numbers.
+// Valid Timescale numbers.
 var supportedTimescale = []int{1, 10, 100}
 
-// Valid timescale units.
+// Valid Timescale units.
 var supportedTimescaleUnit = []string{"s", "ms", "us", "ns", "ps", "fs"}
 
 type VcdWriter struct {
@@ -32,7 +32,7 @@ type VcdWriter struct {
 }
 
 // Creates a new VCDWriter object
-// The date is set to the current date
+// The Date is set to the current Date
 // Timescale can be one of the following: 1-10-100 combined with unit: s-ms-us-ns-ps-fs
 func New(filename string, timeScale string) (VcdWriter, error) {
 	//if !strings.HasSuffix(filename, ".vcd") {
@@ -171,14 +171,14 @@ func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) e
 	return e
 }
 
-// Sets the comment in the vcd. Can be used together with the SetVersion
+// Sets the Comment in the vcd. Can be used together with the SetVersion
 // Can only be used before registering the variables
 func (vcd *VcdWriter) SetComment(comment string) *VcdWriter {
 	check2(vcd.buffered.WriteString("$comment\n\t" + comment + "\n$end\n"))
 	return vcd
 }
 
-// Sets the version in the vcd. Can be used together with the SetComment
+// Sets the Version in the vcd. Can be used together with the SetComment
 // Can only be used before registering the variables
 func (vcd *VcdWriter) SetVersion(version string) *VcdWriter {
 	check2(vcd.buffered.WriteString("$version\n\t" + version + "\n$end\n"))
