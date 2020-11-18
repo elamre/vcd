@@ -10,7 +10,7 @@ import (
 
 type ReadValue struct {
 	Time  int64
-	value interface{}
+	Value interface{}
 }
 
 type VcdReader struct {
