@@ -29,6 +29,7 @@ type VcdWriter struct {
 	variableDefiner     int
 	stringIdentifierMap map[string]VcdDataType
 	previousTime        uint64
+	headerFinalized     bool
 }
 
 // Creates a new VCDWriter object
@@ -36,7 +37,7 @@ type VcdWriter struct {
 // Timescale can be one of the following: 1-10-100 combined with unit: s-ms-us-ns-ps-fs
 func New(filename string, timeScale string) (VcdWriter, error) {
 	//if !strings.HasSuffix(filename, ".vcd") {
-//		filename = filename + ".vcd"
+	//		filename = filename + ".vcd"
 	//}
 	f, err := os.Create(filename)
 	writer := VcdWriter{
@@ -45,6 +46,7 @@ func New(filename string, timeScale string) (VcdWriter, error) {
 		variableDefiner:     33,
 		stringIdentifierMap: make(map[string]VcdDataType),
 		previousTime:        0,
+		headerFinalized:     false,
 	}
 	if err == nil {
 		dat := time.Now().Format("01-02-2006 15:04:05")
@@ -114,7 +116,6 @@ func (vcd *VcdWriter) RegisterVariableList(module string, variables []VcdDataTyp
 		check2(vcd.buffered.WriteString("$var " + response + " $end\n"))
 	}
 	check2(vcd.buffered.WriteString("$upscope $end\n"))
-	check2(vcd.buffered.WriteString("$enddefinitions $end\n"))
 	return vcd.stringIdentifierMap, nil
 }
 
@@ -132,7 +133,6 @@ func (vcd *VcdWriter) RegisterVariables(module string, variables ...VcdDataType)
 		check2(vcd.buffered.WriteString("$var " + response + " $end\n"))
 	}
 	check2(vcd.buffered.WriteString("$upscope $end\n"))
-	check2(vcd.buffered.WriteString("$enddefinitions $end\n"))
 	return vcd.stringIdentifierMap, nil
 }
 
@@ -159,11 +159,17 @@ func (vcd *VcdWriter) SetValue(time uint64, value string, variableName string) e
 		_, _ = vcd.buffered.WriteString("#" + strconv.FormatUint(time, 10) + "\n")
 		vcd.previousTime = time
 	}
+
+	if !vcd.headerFinalized {
+		check2(vcd.buffered.WriteString("$enddefinitions $end\n"))
+		vcd.headerFinalized = true
+	}
+
 	format, e := vcd.stringIdentifierMap[variableName].marshal.format(value)
 	if e != nil {
-		if e == duplicateErr{
+		if e == duplicateErr {
 			return nil
-		}else{
+		} else {
 			panic(e)
 		}
 	}
